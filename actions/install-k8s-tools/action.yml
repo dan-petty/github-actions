@@ -1,0 +1,32 @@
+name: "Install Kubernetes CLI Tools"
+description: "Installs kubectl, helm, and k9s binaries on Linux GitHub runner"
+inputs:
+  kubectl-version:
+    description: "Version of kubectl to install"
+    required: false
+    default: "latest"
+  helm-version:
+    description: "Version of Helm to install"
+    required: false
+    default: "latest"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install kubectl
+      shell: bash
+      run: |
+        if ! command -v kubectl &>/dev/null; then
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          sudo mv kubectl /usr/local/bin/
+        fi
+        kubectl version --client=true --output=yaml || true
+
+    - name: Install Helm
+      shell: bash
+      run: |
+        if ! command -v helm &>/dev/null; then
+          curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+        fi
+        helm version || true

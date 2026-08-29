@@ -1,0 +1,47 @@
+name: "Reusable Python CI Gate"
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: "Python version"
+        required: false
+        type: string
+        default: "3.14"
+      min-coverage:
+        description: "Minimum test coverage percentage required"
+        required: false
+        type: number
+        default: 90
+      run-mypy:
+        description: "Enable strict type checking with mypy"
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  python-ci:
+    name: Python CI Quality Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python and uv
+        uses: dan-petty/github-actions/actions/setup-uv@main
+        with:
+          python-version: ${{ inputs.python-version }}
+          sync-deps: "true"
+
+      - name: Code Formatting Check (Ruff)
+        run: uv run ruff format --check .
+
+      - name: Code Lint Inspection (Ruff)
+        run: uv run ruff check .
+
+      - name: Static Type Validation (Mypy)
+        if: inputs.run-mypy
+        run: uv run mypy src/
+
+      - name: Unit Tests & Code Coverage (Pytest)
+        run: uv run pytest --cov=src --cov-fail-under=${{ inputs.min-coverage }}
